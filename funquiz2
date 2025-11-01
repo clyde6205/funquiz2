@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FunQuizPH</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: linear-gradient(to bottom right, #ef4444, #eab308, #22c55e); min-height: 100vh; }
+    .btn { transition: transform 0.1s; }
+    .btn:active { transform: scale(0.95); }
+    .confetti { position: fixed; width: 10px; height: 10px; background: #f00; animation: fall 3s linear forwards; z-index: 9999; }
+    @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header class="bg-white p-4 shadow-lg sticky top-0">
+  <div class="flex justify-between items-center max-w-4xl mx-auto">
+    <div class="flex items-center space-x-2">
+      <div class="w-10 h-10 bg-blue-600 rounded-lg"></div>
+      <h1 class="text-2xl font-bold text-purple-600">FunQuizPH</h1>
+    </div>
+    <div class="w-10 h-7 bg-red-600 rounded"></div>
+  </div>
+  <p class="text-center text-xs mt-1 font-bold text-red-600">Born Viral, Live to Entertain</p>
+</header>
+
+<main class="max-w-md mx-auto p-4 mt-6">
+  <!-- CATEGORY SCREEN -->
+  <div id="cat-screen">
+    <h2 class="text-3xl font-bold text-center text-white mb-6">Pili Ka Ng Laro!</h2>
+    <div class="grid grid-cols-2 gap-4">
+      <button onclick="startQuiz(0)" class="bg-white p-4 rounded-2xl shadow btn text-center">
+        <div class="text-2xl mb-1">Party</div>
+        <div class="text-xs font-bold">Fiesta Vibes</div>
+      </button>
+      <button onclick="startQuiz(1)" class="bg-white p-4 rounded-2xl shadow btn text-center">
+        <div class="text-2xl mb-1">Music</div>
+        <div class="text-xs font-bold">OPM Hits</div>
+      </button>
+      <button onclick="startQuiz(2)" class="bg-white p-4 rounded-2xl shadow btn text-center">
+        <div class="text-2xl mb-1">Laughing</div>
+        <div class="text-xs font-bold">Pinoy Humor</div>
+      </button>
+      <button onclick="startQuiz(3)" class="bg-white p-4 rounded-2xl shadow btn text-center">
+        <div class="text-2xl mb-1">Hero</div>
+        <div class="text-xs font-bold">History Heroes</div>
+      </button>
+    </div>
+    <button onclick="alert('AI Quiz: Coming soon!')" class="mt-6 w-full bg-purple-600 text-white py-3 rounded-xl font-bold btn">
+      AI Quiz Generator
+    </button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quiz-screen" class="hidden">
+    <div class="bg-white rounded-3xl p-6 shadow-2xl">
+      <div class="flex justify-between text-sm mb-3">
+        <span>Score: <strong id="score">0</strong></span>
+        <span>Streak: <strong id="streak">0</strong></span>
+      </div>
+      <h2 id="q" class="text-xl font-bold mb-5 text-center">Loading...</h2>
+      <div id="opts" class="space-y-3 mb-6"></div>
+      <button onclick="check()" class="w-full bg-purple-600 text-white font-bold py-3 rounded-xl btn">
+        Sagot!
+      </button>
+      <div id="fb" class="mt-4 p-3 rounded-xl hidden"></div>
+    </div>
+    <button onclick="share()" class="mt-4 w-full bg-green-500 text-white py-3 rounded-xl font-bold btn">Share sa GC!</button>
+    <button onclick="back()" class="mt-2 w-full bg-gray-500 text-white py-2 rounded-xl btn">Back</button>
+  </div>
+</main>
+
+<script>
+  const quizzes = [
+    // 0: Fiesta
+    [{q:"Ano ang star ng Sinulog?", o:["Sto. Niño","Lechon","Karaoke"], a:0, t:"Cebu pride!"},
+     {q:"Sa Ati-Atihan, ano ginagawa?", o:["Sumayaw","Kumain","Matulog"], a:0, t:"Kalahok ka ba?"}],
+    // 1: OPM
+    [{q:"Sino ang 'Tala' queen?", o:["Sarah G","Regine","Moira"], a:0, t:"45M views!"},
+     {q:"Anong kanta ang 'Kailan'?", o:["Side A","Eraserheads","Parokya"], a:0, t:"Traffic hit!"}],
+    // 2: Humor
+    [{q:"Bakit late ang Pinoy?", o:["Traffic","Filipino Time","Bagyo"], a:1, t:"Classic!"},
+     {q:"Ano ang 'delulu'?", o:["Delusional","Delicious","Delivery"], a:0, t:"TikTok lingo!"}],
+    // 3: History
+    [{q:"Sino ang crybaby?", o:["Rizal","Bonifacio","Aguinaldo"], a:0, t:"Mi Ultimo Adios!"},
+     {q:"Ilang taon Martial Law?", o:["9","14","20"], a:0, t:"1972-1981"}]
+  ];
+
+  let cur = {}, s = 0, st = 0, cat = -1;
+
+  function startQuiz(i) {
+    cat = i; s = 0; st = 0;
+    document.getElementById('score').textContent = '0';
+    document.getElementById('streak').textContent = '0';
+    document.getElementById('cat-screen').classList.add('hidden');
+    document.getElementById('quiz-screen').classList.remove('hidden');
+    load();
+  }
+
+  function load() {
+    const pool = quizzes[cat] || [];
+    const q = pool[Math.floor(Math.random() * pool.length)];
+    cur = q;
+    document.getElementById('q').textContent = q.q;
+    document.getElementById('opts').innerHTML = q.o.map((opt, i) => `
+      <label class="flex p-4 bg-gradient-to-r from-blue-100 to-green-100 rounded-2xl btn">
+        <input type="radio" name="a" value="${i}" class="mr-3">
+        <span>${opt}</span>
+      </label>
+    `).join('');
+    document.getElementById('fb').classList.add('hidden');
+  }
+
+  function check() {
+    const sel = document.querySelector('input[name="a"]:checked');
+    if (!sel) return alert('Pili ka muna!');
+    const fb = document.getElementById('fb');
+    fb.classList.remove('hidden');
+    if (parseInt(sel.value) === cur.a) {
+      s++; st++;
+      fb.innerHTML = `<p class="text-green-600 font-bold">TAMA! ${cur.t}</p>`;
+      confetti();
+    } else {
+      st = 0;
+      fb.innerHTML = `<p class="text-red-500 font-bold">MALI!</p>`;
+    }
+    document.getElementById('score').textContent = s;
+    document.getElementById('streak').textContent = st;
+    setTimeout(load, 1500);
+  }
+
+  function confetti() {
+    for (let i = 0; i < 20; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = ['#ff0','#f00','#0f0'][i%3];
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 3000);
+    }
+  }
+
+  function share() {
+    const text = `FunQuizPH: ${s} points! Streak ${st} #PinoyPride`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+  }
+
+  function back() {
+    document.getElementById('quiz-screen').classList.add('hidden');
+    document.getElementById('cat-screen').classList.remove('hidden');
+  }
+</script>
+
+</body>
+</html>
